@@ -10,10 +10,17 @@ was set.
 
 Right now only 4 layer boards are generated. I plan to make this configurable using the command line.
 
+I have added kind of a bit of handling for Pad Stacks. KiCad's support is relatively new and not
+fully grown yet. So if you have a trough hole pad with a smaller top layer pad than the bottom one,
+the converter will add an additional SMD pad on the bottom layer to care for that.
+This should pass the DRC.
+
 The code surely could be a bit neater. 
 This was a good endeavour to dive a bit more into Python coding.
 
 There are some small preparations for some better data structures.
+
+Text sizes and placement could be better.
 
 This was only tested with version 4.80 files. Thats all I have.
 
