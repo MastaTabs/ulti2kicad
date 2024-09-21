@@ -15,4 +15,6 @@ This was a good endeavour to dive a bit more into Python coding.
 
 There are some small preparations for some better data structures.
 
+This was only tested with version 4.80 files. Thats all I have.
+
 Usage: ulti2kicad.py <infile> <outfile>
