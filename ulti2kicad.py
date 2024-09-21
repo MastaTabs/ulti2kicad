@@ -3,7 +3,7 @@
 import sys
 import array as arr
 import math
-import json
+# import json
 
 header = """(kicad_pcb (version 20221018) (generator ulti2kicad)
 
