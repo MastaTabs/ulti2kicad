@@ -282,7 +282,9 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
 
                     shapeStr = "(footprint \"library:{sname}\" ".format(sname=sName)
                     shapeStr += " (layer \"{fp_layer}\")\n {component}\n"
-                    shapeStr += """  (fp_text user \"${REFERENCE}\" (at {snrelx} {snrely} {snrot}) (layer "F.Fab")\n    (effects (font (size 0.25 0.25) (thickness 0.04)))\n  )\n""".format(REFERENCE=sName,snrelx=sNRelx,snrely=sNRely,snrot=sNRot)
+                    shapeStr += """  (fp_text user \"${REFERENCE}\" (at {snrelx} {snrely} {snrot}) (layer "F.Fab")\n\
+                                    (effects (font (size 0.25 0.25) (thickness 0.04)))\n  )\n"""\
+                                    .format(REFERENCE=sName,snrelx=sNRelx,snrely=sNRely,snrot=sNRot)
 
                     line = next(ddf).strip()
                     rthJuncB = float(line)
@@ -309,9 +311,11 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                                 
                                 if(sName == 'BOARD'):
                                     # handle complex board outline
-                                    kicad.write("  (gr_line (start {sx:.4f} {sy:.4f}) (end {ex:.4f} {ey:.4f}) (width 0.1) (layer \"Edge.Cuts\"))\n".format(sx=v2mm(sp[0]),sy=-v2mm(sp[1]),ex=v2mm(ep[0]),ey=-v2mm(ep[1])))
+                                    kicad.write("  (gr_line (start {sx:.4f} {sy:.4f}) (end {ex:.4f} {ey:.4f}) (width 0.1) (layer \"Edge.Cuts\"))\n"\
+                                                    .format(sx=v2mm(sp[0]),sy=-v2mm(sp[1]),ex=v2mm(ep[0]),ey=-v2mm(ep[1])))
                                 else:
-                                    shapeStr += "  (fp_line (start {sx} {sy}) (end {ex} {ey}) (layer \"{fp_side}.SilkS\"))\n".format(sx=v2mm(sp[0]),sy=-v2mm(sp[1]),ex=v2mm(ep[0]),ey=-v2mm(ep[1]),fp_side="{fp_side}")
+                                    shapeStr += "  (fp_line (start {sx} {sy}) (end {ex} {ey}) (layer \"{fp_side}.SilkS\"))\n"\
+                                                    .format(sx=v2mm(sp[0]),sy=-v2mm(sp[1]),ex=v2mm(ep[0]),ey=-v2mm(ep[1]),fp_side="{fp_side}")
                                 
                     #Pads
                     pads = []
@@ -350,9 +354,35 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                             # print("Pad2 ", pcoderelx, pcoderely, pcodels, tpx1, tpx2, tpy, tpr, tpc, dc)
                             tpx = tpx1 + tpx2
 
-                            bpads.append({'code': pcode, 'rot': pcoderot, 'layer': pcodels, 'relx': pcoderelx, 'rely': pcoderely, 'name': pname, 'x1': bpx1, 'x2': bpx2, 'y': bpy, 'rad': bpr, 'clear': bpc, 'width': bpx, 'height': bpy, 'drill': 0})
+                            bpads.append({'code': pcode,
+                                           'rot': pcoderot,
+                                         'layer': pcodels,
+                                          'relx': pcoderelx,
+                                          'rely': pcoderely,
+                                          'name': pname,
+                                            'x1': bpx1,
+                                            'x2': bpx2,
+                                             'y': bpy,
+                                           'rad': bpr,
+                                         'clear': bpc,
+                                         'width': bpx,
+                                        'height': bpy,
+                                         'drill': 0})
 
-                            pads.append({'code': pcode, 'rot': pcoderot, 'layer': pcodels, 'relx': pcoderelx, 'rely': pcoderely, 'name': pname, 'x1': tpx1, 'x2': tpx2, 'y': tpy, 'rad': tpr, 'clear': tpc, 'width': tpx, 'height': tpy, 'drill': dc})
+                            pads.append({ 'code': pcode,
+                                           'rot': pcoderot,
+                                         'layer': pcodels,
+                                          'relx': pcoderelx,
+                                          'rely': pcoderely,
+                                          'name': pname,
+                                            'x1': tpx1,
+                                            'x2': tpx2,
+                                             'y': tpy,
+                                           'rad': tpr,
+                                         'clear': tpc,
+                                         'width': tpx,
+                                        'height': tpy,
+                                         'drill': dc})
 
                         if ';' in line:
                             break
@@ -503,7 +533,9 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
 
                     fpadd = "(at {locx} {locy} {rot})\n  ".format(locx = cxpos, locy = cypos, rot = crot)
                     shapeStr = shape['str'].format(component = fpadd, fp_layer = layers[pnpairs[0][1]], fp_side = theside)
-                    shapeStr += "  (property \"Reference\" \"{name}\" (layer \"{cnl}.SilkS\")(at {cnx} {cny} {cnrot}) (hide no) (effects (font (size {cnsizex} {cnsizey}) (thickness {cnthick})) {mir}))\n".format(name = cname, cnx = cnxpos, cny = cnypos, cnrot = cnrot+crot, cnl = theside, cnsizex = cnhght, cnsizey= cnwdth, cnthick=cnthck/10, mir=mir)
+                    shapeStr += "  (property \"Reference\" \"{name}\" (layer \"{cnl}.SilkS\")(at {cnx} {cny} {cnrot}) (hide no) (effects (font (size {cnsizex} {cnsizey}) (thickness {cnthick})) {mir}))\n"\
+                                    .format(name = cname, cnx = cnxpos, cny = cnypos, cnrot = cnrot+crot, cnl = theside, cnsizex = cnhght, cnsizey= cnwdth, cnthick=cnthck/10, mir=mir)
+
                     if shape['pads'][0]['drill'] == 0:
                         shapeStr += "  (attr smd)\n"
                     else:
@@ -531,9 +563,11 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                                 if centeroffset == 0:
                                     # bottom pads
                                     if pnpairs[pidx][1] == 2:
-                                        shapeStr += "  (pad \"{name}\" smd roundrect (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {w} {h}) (layers \"{layer}\" \"B.Paste\" \"B.Mask\") (roundrect_rratio {rr}))\n".format(name = pad['name'], x = pad['relx'], y = -pad['rely'], h = pad['height'], w = pad['width'], rot = crot + pad['rot'], layer=layers[pnpairs[pidx][1]], rr=roundratio, nnum = pnpairs[pidx][0], nname=pname)
+                                        shapeStr += "  (pad \"{name}\" smd roundrect (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {w} {h}) (layers \"{layer}\" \"B.Paste\" \"B.Mask\") (roundrect_rratio {rr}))\n"\
+                                                        .format(name = pad['name'], x = pad['relx'], y = -pad['rely'], h = pad['height'], w = pad['width'], rot = crot + pad['rot'], layer=layers[pnpairs[pidx][1]], rr=roundratio, nnum = pnpairs[pidx][0], nname=pname)
                                     else:
-                                        shapeStr += "  (pad \"{name}\" smd roundrect (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {w} {h}) (layers \"{layer}\" \"F.Paste\"  \"F.Mask\") (roundrect_rratio {rr}))\n".format(name = pad['name'], x = pad['relx'], y = -pad['rely'], h = pad['height'], w = pad['width'], rot = crot + pad['rot'], layer=layers[pnpairs[pidx][1]], rr=roundratio, nnum = pnpairs[pidx][0], nname=pname)
+                                        shapeStr += "  (pad \"{name}\" smd roundrect (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {w} {h}) (layers \"{layer}\" \"F.Paste\"  \"F.Mask\") (roundrect_rratio {rr}))\n"\
+                                                        .format(name = pad['name'], x = pad['relx'], y = -pad['rely'], h = pad['height'], w = pad['width'], rot = crot + pad['rot'], layer=layers[pnpairs[pidx][1]], rr=roundratio, nnum = pnpairs[pidx][0], nname=pname)
                                 else:
                                     match pad['rot']:
                                         case 0:
@@ -550,10 +584,12 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                                             ry = pad['rely'] + centeroffset/2
                                     # Bottom
                                     if pnpairs[pidx][1] == 2:
-                                        shapeStr += "  (pad \"{name}\" smd roundrect (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {w} {h}) (layers \"{layer}\" \"B.Paste\" \"B.Mask\") (roundrect_rratio {rr}))\n".format(name = pad['name'], x = rx, y = -ry, h = pad['height'], w = pad['width'], rot = crot + pad['rot'], layer=layers[pnpairs[pidx][1]], rr=roundratio, nnum = pnpairs[pidx][0], nname=pname)
+                                        shapeStr += "  (pad \"{name}\" smd roundrect (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {w} {h}) (layers \"{layer}\" \"B.Paste\" \"B.Mask\") (roundrect_rratio {rr}))\n"\
+                                                        .format(name = pad['name'], x = rx, y = -ry, h = pad['height'], w = pad['width'], rot = crot + pad['rot'], layer=layers[pnpairs[pidx][1]], rr=roundratio, nnum = pnpairs[pidx][0], nname=pname)
                                     else:
                                         # print("centeroffset ", centeroffset, pad['x1'], pad['x2'])
-                                        shapeStr += "  (pad \"{name}\" smd roundrect (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {w} {h}) (layers \"{layer}\" \"F.Paste\" \"F.Mask\") (roundrect_rratio {rr}))\n".format(name = pad['name'], x = rx, y = -ry, h = pad['height'], w = pad['width'], rot = crot + pad['rot'], layer=layers[pnpairs[pidx][1]], rr=roundratio, nnum = pnpairs[pidx][0], nname=pname)
+                                        shapeStr += "  (pad \"{name}\" smd roundrect (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {w} {h}) (layers \"{layer}\" \"F.Paste\" \"F.Mask\") (roundrect_rratio {rr}))\n"\
+                                                        .format(name = pad['name'], x = rx, y = -ry, h = pad['height'], w = pad['width'], rot = crot + pad['rot'], layer=layers[pnpairs[pidx][1]], rr=roundratio, nnum = pnpairs[pidx][0], nname=pname)
                         else:
                             # thruhole
                             roundratio = pad['rad'] / pad['y']
@@ -567,12 +603,14 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                                 pcoderely = pcoderely - centeroffset
                             
 
-                            shapeStr += "  (pad \"{name}\" thru_hole {padshape} (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {h} {w}) (drill {dc}) (layers \"F.Cu\" \"B.Cu\" \"*.Mask\") (roundrect_rratio {rr}))\n".format(name = pad['name'], x = pad['relx'], y = -pad['rely'], h = pad['height'], w = pad['width'], rot = crot + pad['rot'] - 90, layer=layers[pnpairs[pidx][1]], rr=roundratio, dc = pad['drill'], padshape=padshape, nnum = pnpairs[pidx][0], nname=pname)
+                            shapeStr += "  (pad \"{name}\" thru_hole {padshape} (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {h} {w}) (drill {dc}) (layers \"*.Cu\" \"*.Mask\") (roundrect_rratio {rr}))\n"\
+                                            .format(name = pad['name'], x = pad['relx'], y = -pad['rely'], h = pad['height'], w = pad['width'], rot = crot + pad['rot'] - 90, layer=layers[pnpairs[pidx][1]], rr=roundratio, dc = pad['drill'], padshape=padshape, nnum = pnpairs[pidx][0], nname=pname)
                             # handle complex Padstack, right now only works if Top pad is smaller than the bottom one
                             if(shape['bpads'][pidx] != pad):
                                 # print('pad diff!!')
                                 bpad = shape['bpads'][pidx]
-                                shapeStr += "  (pad \"{name}\" smd {padshape} (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {h} {w}) (drill {dc}) (layers \"B.Cu\" \"B.Mask\") (roundrect_rratio {rr}))\n".format(name = bpad['name'], x = bpad['relx'], y = -bpad['rely'], h = bpad['height'], w = bpad['width'], rot = crot + bpad['rot'] - 90, layer=layers[2], rr=roundratio, dc = bpad['drill'], padshape=padshape, nnum = pnpairs[pidx][0], nname=pname)
+                                shapeStr += "  (pad \"{name}\" smd {padshape} (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {h} {w}) (drill {dc}) (layers \"B.Cu\" \"B.Mask\") (roundrect_rratio {rr}))\n"\
+                                                .format(name = bpad['name'], x = bpad['relx'], y = -bpad['rely'], h = bpad['height'], w = bpad['width'], rot = crot + bpad['rot'] - 90, layer=layers[2], rr=roundratio, dc = bpad['drill'], padshape=padshape, nnum = pnpairs[pidx][0], nname=pname)
 
                     # cstr += shapeStr
                     kicad.write(shapeStr+"\n)\n")
@@ -671,8 +709,9 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                             lptcode = lpline[4]
                             lpclear = lpline[5]
                             lptype  = lpline[6]
-                            lpstr = """  (zone (net {netnr}) (net_name {netname}\") (layer \"{layer}\")\n
+                            lpstr = """  (zone (net {netnr})\n(net_name {netname}\")\n(layer \"{layer}\")\n
                                             (fill yes (thermal_gap 0.508) (thermal_bridge_width 0.508))\n
+                                            (connect_pads (clearance 0.152))\n
                                             (polygon\n
                                                 (pts\n
                                     """
