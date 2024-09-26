@@ -474,7 +474,7 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                     # print("Component")
                     carr = line[3:].split(" ")
                     cname = carr[0]
-                    calias = carr[1]
+                    calias = carr[1].strip("/")
                     cshape = carr[2]
                     carr = next(ddf).strip().split(",")
                     cxpos = v2mm(int(carr[0]))
@@ -486,25 +486,22 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                     cnhght = v2mm(int(carr[6]))
                     cnwdth = v2mm(int(carr[7]))
                     cnthck = v2mm(int(carr[8]))
-                    caxpos = int(carr[9])
-                    caypos = int(carr[10])
-                    carot  = int(carr[11])
-                    cahght = int(carr[12])
-                    cawdth = int(carr[13])
-                    cathck = int(carr[14])
+                    caxpos = v2mm(int(carr[9]))
+                    caypos = v2mm(int(carr[10]))
+                    carot  = int(carr[11])/64
+                    cahght = v2mm(int(carr[12]))
+                    cawdth = v2mm(int(carr[13]))
+                    cathck = v2mm(int(carr[14]))
                     carr = next(ddf).strip().split(",")
-                    # carr = next(ddf).strip().split(" ")
+
                     # print("cname ", cname)
                     nline = ""
                     while True:
                         line = next(ddf).strip()
                         if ';' == line[0]: break
                         nline += line + ' '
-                        # print(nline)
 
-                    # print("nline ", nline)
                     narr = [i for i in nline.strip().split(" ")]
-                    # print(narr)
 
                     pnpairs = []
                     for i in range(0, len(narr), 2):
@@ -535,6 +532,8 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                     shapeStr = shape['str'].format(component = fpadd, fp_layer = layers[pnpairs[0][1]], fp_side = theside)
                     shapeStr += "  (property \"Reference\" \"{name}\" (layer \"{cnl}.SilkS\")(at {cnx} {cny} {cnrot}) (hide no) (effects (font (size {cnsizex} {cnsizey}) (thickness {cnthick})) {mir}))\n"\
                                     .format(name = cname, cnx = cnxpos, cny = cnypos, cnrot = cnrot+crot, cnl = theside, cnsizex = cnhght, cnsizey= cnwdth, cnthick=cnthck/10, mir=mir)
+                    shapeStr += "  (property \"Value\" \"{name}\" (layer \"{anl}.Fab\")(at {anx} {any} {anrot}) (hide no) (effects (font (size {ansizex} {ansizey}) (thickness {anthick})) {mir}))\n"\
+                                    .format(name = calias, anx = caxpos, any = caypos, anrot = carot+crot, anl = theside, ansizex = cahght, ansizey= cawdth, anthick=cathck/10, mir=mir)
 
                     if shape['pads'][0]['drill'] == 0:
                         shapeStr += "  (attr smd)\n"
