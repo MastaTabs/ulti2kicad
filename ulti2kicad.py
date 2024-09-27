@@ -35,6 +35,7 @@ header = """(kicad_pcb (version 20221018) (generator ulti2kicad)
     (47 "F.CrtYd" user "F.Courtyard")
     (48 "B.Fab" user)
     (49 "F.Fab" user)
+    (50 "User.1" user "User.Silk")
   )
 
   (setup
@@ -193,7 +194,9 @@ Shapes = {}
 
 # print(drillCode)
 
-layers = ['F.SilkS','F.Cu','B.Cu','In1.Cu','In2.Cu','F.Mask','B.Mask','B.SilkS','B.Fab','Cmts.User','','','']
+# layers = [''] * 100
+layers = ['F.Fab','F.Cu','B.Cu','In1.Cu','In2.Cu','F.Mask','B.Mask','B.SilkS','B.Fab','Cmts.User','','','']
+# layers[50] = 'User.Silk'
 
 def v2mm(val):
     return (val/1.2) * 0.0254
@@ -314,7 +317,7 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                                     kicad.write("  (gr_line (start {sx:.4f} {sy:.4f}) (end {ex:.4f} {ey:.4f}) (width 0.1) (layer \"Edge.Cuts\"))\n"\
                                                     .format(sx=v2mm(sp[0]),sy=-v2mm(sp[1]),ex=v2mm(ep[0]),ey=-v2mm(ep[1])))
                                 else:
-                                    shapeStr += "  (fp_line (start {sx} {sy}) (end {ex} {ey}) (layer \"{fp_side}.SilkS\"))\n"\
+                                    shapeStr += "  (fp_line (start {sx} {sy}) (end {ex} {ey}) (layer \"{fp_side}.Fab\"))\n"\
                                                     .format(sx=v2mm(sp[0]),sy=-v2mm(sp[1]),ex=v2mm(ep[0]),ey=-v2mm(ep[1]),fp_side="{fp_side}")
                                 
                     #Pads
@@ -412,10 +415,10 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                             yArcEnd   = ar * math.sin(math.pi / 180 * arcEnd)
 
                             if(arc2 == 360):
-                                circstr = "  (fp_circle (center {xc} {yc}) (end {xe} {ye}) (layer \"{fp_side}.SilkS\") (width 0.1))\n"
+                                circstr = "  (fp_circle (center {xc} {yc}) (end {xe} {ye}) (layer \"{fp_side}.Fab\") (width 0.1))\n"
                                 shapeStr += circstr.format(xc = ax, yc = -ay, xe = ax + ar, ye = -ay,fp_side="{fp_side}")
                             else:
-                                astr = "  (fp_arc (start {xs:.4f} {ys:.4f}) (mid {xm:.4f} {ym:.4f}) (end {xe:.4f} {ye:.4f}) (width {width:.3f}) (layer \"{fp_side}.SilkS\"))\n"
+                                astr = "  (fp_arc (start {xs:.4f} {ys:.4f}) (mid {xm:.4f} {ym:.4f}) (end {xe:.4f} {ye:.4f}) (width {width:.3f}) (layer \"{fp_side}.Fab\"))\n"
                                 shapeStr += astr.format(xs = ax + xArcStart, ys = -(ay + yArcStart), xm = ax + xArcMid, ym = -(ay - yArcMid), xe = ax + xArcEnd, ye = -(ay + yArcEnd), width = 0.1,fp_side="{fp_side}")
 
                         if ';' in line:
@@ -530,7 +533,7 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
 
                     fpadd = "(at {locx} {locy} {rot})\n  ".format(locx = cxpos, locy = cypos, rot = crot)
                     shapeStr = shape['str'].format(component = fpadd, fp_layer = layers[pnpairs[0][1]], fp_side = theside)
-                    shapeStr += "  (property \"Reference\" \"{name}\" (layer \"{cnl}.SilkS\")(at {cnx} {cny} {cnrot}) (hide no) (effects (font (size {cnsizex} {cnsizey}) (thickness {cnthick})) {mir}))\n"\
+                    shapeStr += "  (property \"Reference\" \"{name}\" (layer \"{cnl}.Fab\")(at {cnx} {cny} {cnrot}) (hide no) (effects (font (size {cnsizex} {cnsizey}) (thickness {cnthick})) {mir}))\n"\
                                     .format(name = cname, cnx = cnxpos, cny = cnypos, cnrot = cnrot+crot, cnl = theside, cnsizex = cnhght, cnsizey= cnwdth, cnthick=cnthck/10, mir=mir)
                     shapeStr += "  (property \"Value\" \"{name}\" (layer \"{anl}.Fab\")(at {anx} {any} {anrot}) (hide no) (effects (font (size {ansizex} {ansizey}) (thickness {anthick})) {mir}))\n"\
                                     .format(name = calias, anx = caxpos, any = caypos, anrot = carot+crot, anl = theside, ansizex = cahght, ansizey= cawdth, anthick=cathck/10, mir=mir)
@@ -780,7 +783,7 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                     else:
                         textj = ''
 
-                    # ['F.SilkS','F.Cu','B.Cu','In1.Cu','In2.Cu','F.Mask','B.Mask','B.SilkS','','Cmts.User','','','']
+                    # ['F.Fab','F.Cu','B.Cu','In1.Cu','In2.Cu','F.Mask','B.Mask','B.SilkS','','Cmts.User','','','']
                     if textl == 0:
                         textl = 0 if textr > 0 else 7
 
