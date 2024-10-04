@@ -182,6 +182,7 @@ parser = argparse.ArgumentParser(description='Convert PCB board files in UltiBoa
 parser.add_argument('infile')
 parser.add_argument('outfile')
 parser.add_argument('-f', '--font', default='KiCad Font')
+parser.add_argument('-ts', '--textsilk', action='store_true', default=False)
 
 args = parser.parse_args()
 
@@ -335,7 +336,7 @@ with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as
                                     kicad.write("  (gr_line (start {sx:.4f} {sy:.4f}) (end {ex:.4f} {ey:.4f}) (width 0.1) (layer \"Edge.Cuts\"))\n"\
                                                     .format(sx=v2mm(sp[0]),sy=-v2mm(sp[1]),ex=v2mm(ep[0]),ey=-v2mm(ep[1])))
                                 else:
-                                    shapeStr += "  (fp_line (start {sx} {sy}) (end {ex} {ey}) (layer \"{fp_side}.Fab\"))\n"\
+                                    shapeStr += "  (fp_line (start {sx} {sy}) (end {ex} {ey}) (layer \"{fp_side}.SilkS\"))\n"\
                                                     .format(sx=v2mm(sp[0]),sy=-v2mm(sp[1]),ex=v2mm(ep[0]),ey=-v2mm(ep[1]),fp_side="{fp_side}")
                                 
                     #Pads
@@ -433,10 +434,10 @@ with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as
                             yArcEnd   = ar * math.sin(math.pi / 180 * arcEnd)
 
                             if(arc2 == 360):
-                                circstr = "  (fp_circle (center {xc} {yc}) (end {xe} {ye}) (layer \"{fp_side}.Fab\") (width 0.1))\n"
+                                circstr = "  (fp_circle (center {xc} {yc}) (end {xe} {ye}) (layer \"{fp_side}.SilkS\") (width 0.1))\n"
                                 shapeStr += circstr.format(xc = ax, yc = -ay, xe = ax + ar, ye = -ay,fp_side="{fp_side}")
                             else:
-                                astr = "  (fp_arc (start {xs:.4f} {ys:.4f}) (mid {xm:.4f} {ym:.4f}) (end {xe:.4f} {ye:.4f}) (width {width:.3f}) (layer \"{fp_side}.Fab\"))\n"
+                                astr = "  (fp_arc (start {xs:.4f} {ys:.4f}) (mid {xm:.4f} {ym:.4f}) (end {xe:.4f} {ye:.4f}) (width {width:.3f}) (layer \"{fp_side}.SilkS\"))\n"
                                 shapeStr += astr.format(xs = ax + xArcStart, ys = -(ay + yArcStart), xm = ax + xArcMid, ym = -(ay - yArcMid), xe = ax + xArcEnd, ye = -(ay + yArcEnd), width = 0.1,fp_side="{fp_side}")
 
                         if ';' in line:
@@ -801,12 +802,14 @@ with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as
                         textj = ''
 
                     # ['F.Fab','F.Cu','B.Cu','In1.Cu','In2.Cu','F.Mask','B.Mask','B.SilkS','','Cmts.User','','','']
-                    if textl == 0:
-                        textl = 0 if textr > 0 else 10
+                    # if textl == 0:
+                    #     textl = 0 if textr > 0 else 10
+
+                    reallayer = 'User.1' if (args.textsilk == True and textl == 0) else layers[textl]
 
                     thetext = "  (gr_text \"{tstr}\" (at {x} {y} {r}) (layer \"{tl}\") (effects (font (face \"{font}\") (size {fh} {fw}) (thickness {thick})) {j}))\n"
-                    kicad.write(thetext.format(tstr = textstr, x = textx, y = texty, r = textr, tl = layers[textl], fw = textw, fh = texth, thick = textt, j = textj, font=args.font))
-                    # print(textstr)
+                    kicad.write(thetext.format(tstr = textstr, x = textx, y = texty, r = textr, tl = reallayer, fw = textw, fh = texth, thick = textt, j = textj, font=args.font))
+                    print(textstr, textl, args.textsilk)
                 # case _:
                 #     print(line[1])
 
