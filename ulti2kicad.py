@@ -809,7 +809,7 @@ with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as
 
                     thetext = "  (gr_text \"{tstr}\" (at {x} {y} {r}) (layer \"{tl}\") (effects (font (face \"{font}\") (size {fh} {fw}) (thickness {thick})) {j}))\n"
                     kicad.write(thetext.format(tstr = textstr, x = textx, y = texty, r = textr, tl = reallayer, fw = textw, fh = texth, thick = textt, j = textj, font=args.font))
-                    print(textstr, textl, args.textsilk)
+                    # print(textstr, textl, args.textsilk)
                 # case _:
                 #     print(line[1])
 
