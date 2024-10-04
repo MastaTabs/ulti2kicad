@@ -3,7 +3,7 @@
 import sys
 import array as arr
 import math
-# import json
+import argparse
 
 header = """(kicad_pcb (version 20221018) (generator ulti2kicad)
 
@@ -14,8 +14,7 @@ header = """(kicad_pcb (version 20221018) (generator ulti2kicad)
   (paper "{papersize}")
   (layers
     (0 "F.Cu" signal)
-    (1 "In1.Cu" power)
-    (2 "In2.Cu" power)
+    {inner_layers}
     (31 "B.Cu" signal)
     (32 "B.Adhes" user "B.Adhesive")
     (33 "F.Adhes" user "F.Adhesive")
@@ -179,8 +178,16 @@ class SExpression:
         subvalues_str = " ".join(subvalue_strings)
         return f"({self.name} {subvalues_str})"
 
+parser = argparse.ArgumentParser(description='Convert PCB board files in UltiBoard 4.x format to KiCad pcb format.')
+parser.add_argument('infile')
+parser.add_argument('outfile')
+parser.add_argument('-f', '--font', default='KiCad Font')
+
+args = parser.parse_args()
+
+print(args)
 xScale = (1/1.2) * 0.0254
-ncount = -1
+ncount = 0
 
 traceWidth = {}
 traceClearance = {}
@@ -189,20 +196,21 @@ padT = [{'X1': 0, 'X2': 0, 'Y': 0, 'Radius': 0, 'Clear': 0, 'Horz': 0, 'Vert': 0
 padI = [{'X1': 0, 'X2': 0, 'Y': 0, 'Radius': 0, 'Clear': 0, 'Horz': 0, 'Vert': 0, 'ThermH': 0, 'ThermV': 0} for x in range(256)]
 padB = [{'X1': 0, 'X2': 0, 'Y': 0, 'Radius': 0, 'Clear': 0, 'Horz': 0, 'Vert': 0, 'ThermH': 0, 'ThermV': 0} for x in range(256)]
 nets = {}
+nets[0] = ''
 # shapes = {}
 Shapes = {}
 
 # print(drillCode)
 
 # layers = [''] * 100
-layers = ['F.Fab','F.Cu','B.Cu','In1.Cu','In2.Cu','F.Mask','B.Mask','B.SilkS','B.Fab','Cmts.User','','','']
+layers = ['F.Fab','F.Cu','B.Cu','In1.Cu','In2.Cu','F.Mask','B.Mask','B.SilkS','B.Fab','Cmts.User','F.SilkS','','']
 # layers[50] = 'User.Silk'
 
 def v2mm(val):
     return (val/1.2) * 0.0254
 
 def nnameCheck(name, nb):
-    name = name[1:]
+    # name = name[1:]
     if(name == ""):
         name = "SB${}".format(nb)
     
@@ -238,7 +246,7 @@ def split_odd(arr):
         result.append(sublist)
     return result
 
-with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as kicad:
+with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as kicad:
     for line in ddf:
         if(line[0] == '*'):
             # print(line)
@@ -249,17 +257,27 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                     # print("Header")
                     line = next(ddf).strip()
                     line = next(ddf).strip()
-                    outline = [v2mm(int(i)) for i in line[:-1].split(',')]
+                    outline = [int(i) for i in line[:-1].split(',')]
                     # print("Outline ", outline)
                     # hstr = "  (gr_rect (start {x1:.4f} {y1:.4f}) (end {x2:.4f} {y2:.4f}) (width 0.1) (layer \"Edge.Cuts\"))\n"
                     # kicad.write(hstr.format(x1 = outline[0], y1 = -outline[1], x2 = outline[2], y2 = -outline[3]))
-                    if(outline[0]+(-outline[2]) > 260 ):
+                    if(v2mm(outline[0])+v2mm(-outline[2]) > 260 ):
                         # print(outline[0]+(-outline[2]))
-                        header = header.format(papersize='A3')
+                        psize = 'A3'
                     else:
                         # print(outline[0]+(-outline[2]))
-                        header = header.format(papersize='A4')
+                        psize = 'A4'
+                    maxlayers = outline[-1]
+                    print(maxlayers)
+
+                    innerl = ""
+                    for l in range(1,maxlayers-1):
+                        innerl += "({c} \"In{l}.Cu\" signal)\n".format(c=l,l=l)
+
+                    header = header.format(inner_layers=innerl, papersize=psize)
+
                     kicad.writelines(header)
+                    kicad.write("  (net 0 \"\")\n")     #Empty Net
 
                 case 'S':
                     # print("Shape " + line[2:])
@@ -423,9 +441,7 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
 
                         if ';' in line:
                             break
-                    # shapeStr += ")\n"
-                    # kicad.write(shapeStr)
-                    # shapes[sName] = shapeStr
+
                     Shapes[sName] = {'str': shapeStr, 'pads': pads, 'bpads': bpads}
                 case 'T':
                     # print("Technology")
@@ -464,15 +480,14 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                 case 'N':
                     # print("Net")
                     larr = line[3:-1].split(" ")
-                    ncount += 1
                     # print("Net " + larr[0][1:], [int(i) for i in larr[1:]])
                     # nets[ncount] = larr[0][1:]
-                    nets[ncount] = larr[0]
+                    ncount += 1
+                    nets[ncount] = nnameCheck(larr[0].strip("\""), ncount)
                     if(nets[ncount] == 65535):
-                        nets[ncount] = 0
+                        nets[ncount] = 1
                     # if len(larr[0]) > 1:
-                    name = nnameCheck(nets[ncount], ncount)
-                    kicad.write("  (net {ncount} \"{name}\")\n".format(ncount = ncount, name = name))
+                    kicad.write("  (net {ncount} \"{name}\")\n".format(ncount = ncount, name = nets[ncount]))
                 case 'C':
                     # print("Component")
                     carr = line[3:].split(" ")
@@ -533,10 +548,10 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
 
                     fpadd = "(at {locx} {locy} {rot})\n  ".format(locx = cxpos, locy = cypos, rot = crot)
                     shapeStr = shape['str'].format(component = fpadd, fp_layer = layers[pnpairs[0][1]], fp_side = theside)
-                    shapeStr += "  (property \"Reference\" \"{name}\" (layer \"{cnl}.Fab\")(at {cnx} {cny} {cnrot}) (hide no) (effects (font (size {cnsizex} {cnsizey}) (thickness {cnthick})) {mir}))\n"\
-                                    .format(name = cname, cnx = cnxpos, cny = cnypos, cnrot = cnrot+crot, cnl = theside, cnsizex = cnhght, cnsizey= cnwdth, cnthick=cnthck/10, mir=mir)
-                    shapeStr += "  (property \"Value\" \"{name}\" (layer \"{anl}.Fab\")(at {anx} {any} {anrot}) (hide no) (effects (font (size {ansizex} {ansizey}) (thickness {anthick})) {mir}))\n"\
-                                    .format(name = calias, anx = caxpos, any = caypos, anrot = carot+crot, anl = theside, ansizex = cahght, ansizey= cawdth, anthick=cathck/10, mir=mir)
+                    shapeStr += "  (property \"Reference\" \"{name}\" (layer \"{cnl}.Fab\")(at {cnx} {cny} {cnrot}) (hide no) (effects  (font (face \"{font}\") (size {cnsizex} {cnsizey}) (thickness {cnthick})) {mir}))\n"\
+                                    .format(name = cname, cnx = cnxpos, cny = cnypos, cnrot = cnrot+crot, cnl = theside, cnsizex = cnhght, cnsizey= cnwdth, cnthick=cnthck/10, mir=mir, font=args.font)
+                    shapeStr += "  (property \"Value\" \"{name}\" (layer \"{anl}.Fab\")(at {anx} {any} {anrot}) (hide yes) (effects (font (face \"{font}\") (size {ansizex} {ansizey}) (thickness {anthick})) {mir}))\n"\
+                                    .format(name = calias, anx = caxpos, any = caypos, anrot = carot+crot, anl = theside, ansizex = cahght, ansizey= cawdth, anthick=cathck/10, mir=mir, font=args.font)
 
                     if shape['pads'][0]['drill'] == 0:
                         shapeStr += "  (attr smd)\n"
@@ -550,7 +565,9 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
 
                         if pad['layer'] == 0xffffffff: pad['layer'] = 9
                         # if pnpairs[pidx][0] == 65535: 
-                        pname = nnameCheck(nets[pnpairs[pidx][0]], pnpairs[pidx][0])
+                        # pname = nnameCheck(nets[pnpairs[pidx][0]], pnpairs[pidx][0])
+                        pname = nets[pnpairs[pidx][0]]
+                        # print(pname)
 
                         centeroffset = pad['x1'] - pad['x2']
                         px = pad['x1'] + pad['x2']
@@ -565,11 +582,11 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                                 if centeroffset == 0:
                                     # bottom pads
                                     if pnpairs[pidx][1] == 2:
-                                        shapeStr += "  (pad \"{name}\" smd roundrect (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {w} {h}) (layers \"{layer}\" \"B.Paste\" \"B.Mask\") (roundrect_rratio {rr}))\n"\
-                                                        .format(name = pad['name'], x = pad['relx'], y = -pad['rely'], h = pad['height'], w = pad['width'], rot = crot + pad['rot'], layer=layers[pnpairs[pidx][1]], rr=roundratio, nnum = pnpairs[pidx][0], nname=pname)
+                                        shapeStr += "  (pad \"{name}\" smd roundrect (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {w} {h}) (layers \"{layer}\" \"B.Paste\" \"B.Mask\") (roundrect_rratio {rr}) (clearance {clear}))\n"\
+                                                        .format(name = pad['name'], x = pad['relx'], y = -pad['rely'], h = pad['height'], w = pad['width'], rot = crot + pad['rot'], layer=layers[pnpairs[pidx][1]], rr=roundratio, nnum = pnpairs[pidx][0], nname=pname, clear=pad['clear'])
                                     else:
-                                        shapeStr += "  (pad \"{name}\" smd roundrect (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {w} {h}) (layers \"{layer}\" \"F.Paste\"  \"F.Mask\") (roundrect_rratio {rr}))\n"\
-                                                        .format(name = pad['name'], x = pad['relx'], y = -pad['rely'], h = pad['height'], w = pad['width'], rot = crot + pad['rot'], layer=layers[pnpairs[pidx][1]], rr=roundratio, nnum = pnpairs[pidx][0], nname=pname)
+                                        shapeStr += "  (pad \"{name}\" smd roundrect (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {w} {h}) (layers \"{layer}\" \"F.Paste\"  \"F.Mask\") (roundrect_rratio {rr}) (clearance {clear}))\n"\
+                                                        .format(name = pad['name'], x = pad['relx'], y = -pad['rely'], h = pad['height'], w = pad['width'], rot = crot + pad['rot'], layer=layers[pnpairs[pidx][1]], rr=roundratio, nnum = pnpairs[pidx][0], nname=pname, clear=pad['clear'])
                                 else:
                                     match pad['rot']:
                                         case 0:
@@ -586,12 +603,12 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                                             ry = pad['rely'] + centeroffset/2
                                     # Bottom
                                     if pnpairs[pidx][1] == 2:
-                                        shapeStr += "  (pad \"{name}\" smd roundrect (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {w} {h}) (layers \"{layer}\" \"B.Paste\" \"B.Mask\") (roundrect_rratio {rr}))\n"\
-                                                        .format(name = pad['name'], x = rx, y = -ry, h = pad['height'], w = pad['width'], rot = crot + pad['rot'], layer=layers[pnpairs[pidx][1]], rr=roundratio, nnum = pnpairs[pidx][0], nname=pname)
+                                        shapeStr += "  (pad \"{name}\" smd roundrect (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {w} {h}) (layers \"{layer}\" \"B.Paste\" \"B.Mask\") (roundrect_rratio {rr}) (clearance {clear}))\n"\
+                                                        .format(name = pad['name'], x = rx, y = -ry, h = pad['height'], w = pad['width'], rot = crot + pad['rot'], layer=layers[pnpairs[pidx][1]], rr=roundratio, nnum = pnpairs[pidx][0], nname=pname, clear=pad['clear'])
                                     else:
                                         # print("centeroffset ", centeroffset, pad['x1'], pad['x2'])
-                                        shapeStr += "  (pad \"{name}\" smd roundrect (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {w} {h}) (layers \"{layer}\" \"F.Paste\" \"F.Mask\") (roundrect_rratio {rr}))\n"\
-                                                        .format(name = pad['name'], x = rx, y = -ry, h = pad['height'], w = pad['width'], rot = crot + pad['rot'], layer=layers[pnpairs[pidx][1]], rr=roundratio, nnum = pnpairs[pidx][0], nname=pname)
+                                        shapeStr += "  (pad \"{name}\" smd roundrect (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {w} {h}) (layers \"{layer}\" \"F.Paste\" \"F.Mask\") (roundrect_rratio {rr}) (clearance {clear}))\n"\
+                                                        .format(name = pad['name'], x = rx, y = -ry, h = pad['height'], w = pad['width'], rot = crot + pad['rot'], layer=layers[pnpairs[pidx][1]], rr=roundratio, nnum = pnpairs[pidx][0], nname=pname, clear=pad['clear'])
                         else:
                             # thruhole
                             roundratio = pad['rad'] / pad['y']
@@ -605,14 +622,14 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                                 pcoderely = pcoderely - centeroffset
                             
 
-                            shapeStr += "  (pad \"{name}\" thru_hole {padshape} (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {h} {w}) (drill {dc}) (layers \"*.Cu\" \"*.Mask\") (roundrect_rratio {rr}))\n"\
-                                            .format(name = pad['name'], x = pad['relx'], y = -pad['rely'], h = pad['height'], w = pad['width'], rot = crot + pad['rot'] - 90, layer=layers[pnpairs[pidx][1]], rr=roundratio, dc = pad['drill'], padshape=padshape, nnum = pnpairs[pidx][0], nname=pname)
+                            shapeStr += "  (pad \"{name}\" thru_hole {padshape} (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {h} {w}) (drill {dc}) (layers \"*.Cu\" \"*.Mask\") (roundrect_rratio {rr}) (clearance {clear}))\n"\
+                                            .format(name = pad['name'], x = pad['relx'], y = -pad['rely'], h = pad['height'], w = pad['width'], rot = crot + pad['rot'] - 90, layer=layers[pnpairs[pidx][1]], rr=roundratio, dc = pad['drill'], padshape=padshape, nnum = pnpairs[pidx][0], nname=pname, clear=pad['clear'])
                             # handle complex Padstack, right now only works if Top pad is smaller than the bottom one
                             if(shape['bpads'][pidx] != pad):
                                 # print('pad diff!!')
                                 bpad = shape['bpads'][pidx]
-                                shapeStr += "  (pad \"{name}\" smd {padshape} (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {h} {w}) (drill {dc}) (layers \"B.Cu\" \"B.Mask\") (roundrect_rratio {rr}))\n"\
-                                                .format(name = bpad['name'], x = bpad['relx'], y = -bpad['rely'], h = bpad['height'], w = bpad['width'], rot = crot + bpad['rot'] - 90, layer=layers[2], rr=roundratio, dc = bpad['drill'], padshape=padshape, nnum = pnpairs[pidx][0], nname=pname)
+                                shapeStr += "  (pad \"{name}\" smd {padshape} (net {nnum} \"{nname}\") (at {x} {y} {rot}) (size {h} {w}) (drill {dc}) (layers \"B.Cu\" \"B.Mask\") (roundrect_rratio {rr}) (clearance {clear}))\n"\
+                                                .format(name = bpad['name'], x = bpad['relx'], y = -bpad['rely'], h = bpad['height'], w = bpad['width'], rot = crot + bpad['rot'] - 90, layer=layers[2], rr=roundratio, dc = bpad['drill'], padshape=padshape, nnum = pnpairs[pidx][0], nname=pname, clear=pad['clear'])
 
                     # cstr += shapeStr
                     kicad.write(shapeStr+"\n)\n")
@@ -637,7 +654,7 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                                     ttype = int(tarr[4])
                                     orient = int(tarr[5][0])
                                     if(netnr == 65535):
-                                        netnr = 0
+                                        netnr = 1
                                     # print("Track ", layer, coord1, coord2, coord3, netnr, tcode, ttype, orient)
                                     # print(traceWidth)
                                     tstr = "  (segment (start {x1:.4f} {y1:.4f}) (end {x2:.4f} {y2:.4f}) (width {width:.3f}) (layer {layer}) (net {netnr}))\n"
@@ -667,7 +684,7 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                             vy2 = -(v2mm(int(vline[4])))
                             vnetnr = int(vline[5])
                             if(vnetnr == 65535):
-                                vnetnr = 0
+                                vnetnr = 1
                             vtcode = int(vline[6])
                             vttype = int(vline[7])
                             vstr = "  (segment (start {x1:.4f} {y1:.4f}) (end {x2:.4f} {y2:.4f}) (width {width:.3f}) (layer {layer}) (net {netnr}))\n"
@@ -709,15 +726,15 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
                             lppat   = lpline[2]
                             lpdist  = lpline[3]
                             lptcode = lpline[4]
-                            lpclear = lpline[5]
+                            lpclear = v2mm(lpline[5])
                             lptype  = lpline[6]
-                            lpstr = """  (zone (net {netnr})\n(net_name {netname}\")\n(layer \"{layer}\")\n
+                            lpstr = """  (zone (net {netnr})\n(net_name \"{netname}\")\n(layer \"{layer}\")\n
                                             (fill yes (thermal_gap 0.508) (thermal_bridge_width 0.508))\n
-                                            (connect_pads (clearance 0.152))\n
+                                            (connect_pads (clearance {lpclear}))\n
                                             (polygon\n
                                                 (pts\n
                                     """
-                            kicad.write(lpstr.format(netnr = lpnetnr, netname = nets[lpnetnr], layer = layers[lplayer]))
+                            kicad.write(lpstr.format(netnr = lpnetnr, netname = nets[lpnetnr], layer = layers[lplayer], lpclear = lpclear))
                             while True:
                                 line = next(ddf).strip()
                                 if(line[0] == ';'): break
@@ -785,10 +802,10 @@ with open(sys.argv[1], 'r', encoding="cp850") as ddf, open(sys.argv[2], 'w') as 
 
                     # ['F.Fab','F.Cu','B.Cu','In1.Cu','In2.Cu','F.Mask','B.Mask','B.SilkS','','Cmts.User','','','']
                     if textl == 0:
-                        textl = 0 if textr > 0 else 7
+                        textl = 0 if textr > 0 else 10
 
-                    thetext = "  (gr_text \"{tstr}\" (at {x} {y} {r}) (layer \"{tl}\") (effects (font (size {fh} {fw}) (thickness {thick})) {j}))\n"
-                    kicad.write(thetext.format(tstr = textstr, x = textx, y = texty, r = textr, tl = layers[textl], fw = textw, fh = texth, thick = textt, j = textj))
+                    thetext = "  (gr_text \"{tstr}\" (at {x} {y} {r}) (layer \"{tl}\") (effects (font (face \"{font}\") (size {fh} {fw}) (thickness {thick})) {j}))\n"
+                    kicad.write(thetext.format(tstr = textstr, x = textx, y = texty, r = textr, tl = layers[textl], fw = textw, fh = texth, thick = textt, j = textj, font=args.font))
                     # print(textstr)
                 # case _:
                 #     print(line[1])
