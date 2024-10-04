@@ -24,4 +24,5 @@ Text sizes and placement could be better.
 
 This was only tested with version 4.80 files. Thats all I have.
 
-Usage: ulti2kicad.py \<infile\> \<outfile\>
+usage: ulti2kicad.py \[-h\] \[-f FONT\] infile outfile
+
