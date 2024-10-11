@@ -696,7 +696,7 @@ with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as
                             # print(aline)
                             alayer = int(aline[0])
                             ax = v2mm(int(aline[1]))
-                            ay = -(v2mm(int(aline[2])))
+                            ay = (v2mm(int(aline[2])))
                             ar = v2mm(int(aline[3]))
                             arc1 = int(aline[4]) / 64
                             arc2 = int(aline[5]) / 64
@@ -708,15 +708,19 @@ with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as
 
                             arcStart = 360 + arc1
                             if(arcStart > 360): arcStart -= 360
+                            arcMid = -(arcStart + (arc2/2))
+                            if(arcMid > 360): arcMid -= 360
                             arcEnd = arcStart + arc2
                             if(arcEnd > 360): arcEnd -= 360
                             xArcStart = ar * math.cos(math.pi / 180 * arcStart)
                             yArcStart = ar * math.sin(math.pi / 180 * arcStart)
+                            xArcMid   = ar * math.cos(math.pi / 180 * arcMid)
+                            yArcMid   = ar * math.sin(math.pi / 180 * arcMid)
                             xArcEnd   = ar * math.cos(math.pi / 180 * arcEnd)
                             yArcEnd   = ar * math.sin(math.pi / 180 * arcEnd)
 
                             astr = "  (gr_arc (start {xs:.4f} {ys:.4f}) (mid {xm:.4f} {ym:.4f}) (end {xe:.4f} {ye:.4f}) (width {width:.3f}) (layer {layer}))\n"
-                            kicad.write(astr.format(xs = ax + xArcStart, ys = ay + yArcStart, xm = ax, ym = ay, xe = ax + xArcEnd, ye = ay + yArcEnd, width = v2mm(traceWidth[atcode]), layer = "\""+layers[alayer]+"\"", netnr = anetnr))
+                            kicad.write(astr.format(xs = ax + xArcStart, ys = -(ay + yArcStart), xm = ax + xArcMid, ym = -(ay - yArcMid), xe = ax + xArcEnd, ye = -(ay + yArcEnd), width = v2mm(traceWidth[atcode]), layer = "\""+layers[alayer]+"\"", netnr = anetnr))
                         case 'P':
                             # print("Polygon")
                             lpline = [int(i) for i in line[4:].split(' ')]
@@ -730,7 +734,7 @@ with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as
                             lpclear = v2mm(lpline[5])
                             lptype  = lpline[6]
                             lpstr = """  (zone (net {netnr})\n(net_name \"{netname}\")\n(layer \"{layer}\")\n
-                                            (fill yes (thermal_gap 0.508) (thermal_bridge_width 0.508))\n
+                                            (fill yes (thermal_gap 0.254) (thermal_bridge_width 0.254))\n
                                             (connect_pads (clearance {lpclear}))\n
                                             (polygon\n
                                                 (pts\n
