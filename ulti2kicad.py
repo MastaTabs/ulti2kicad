@@ -527,10 +527,10 @@ with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as
                         pair = narr[i:i+2]
                         # print("pair ", pair)
                         # if pair[0] != '': break
-                        pair[0] =  int(pair[0])
-                        if pair[0] == 65535: pair[0] = 0
-                        if pair[1] == 'ffffffff': pair[1] = 0   # thru hole
-                        pair[1] = int(pair[1])
+                        pair[0] =  int(pair[0]) + 1 # in kicad net 0 has to remain empty
+                        if pair[0] == 65536: pair[0] = 1
+                        if not pair[1].isdigit(): pair[1] = 0   # thru hole
+                        else: pair[1] = int(pair[1])
                         # pair.append(pair[1])
                         # pair[1] = 0
                         pnpairs.append(pair)
@@ -818,7 +818,8 @@ with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as
                 #     print(line[1])
 
         # kicad.write(line)
-    # print(json.dumps(Shapes, indent=4))
+    # import json
+    # print(json.dumps(nets, indent=4))
     # print(nets)
     kicad.write(')')
     kicad.close()
