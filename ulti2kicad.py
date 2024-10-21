@@ -179,10 +179,10 @@ class SExpression:
         return f"({self.name} {subvalues_str})"
 
 parser = argparse.ArgumentParser(description='Convert PCB board files in UltiBoard 4.x format to KiCad pcb format.')
-parser.add_argument('infile')
-parser.add_argument('outfile')
-parser.add_argument('-f', '--font', default='KiCad Font')
-parser.add_argument('-ts', '--textsilk', action='store_true', default=False)
+parser.add_argument('infile', help='input file',)
+parser.add_argument('outfile', help='output file')
+parser.add_argument('-f', '--font', default='KiCad Font', help='use a different font, mono spaced fonts work best')
+parser.add_argument('-ts', '--textsilk', action='store_true', default=False, help='put freestanding silk text unto the front silk layer instead of the reference layer')
 
 args = parser.parse_args()
 
