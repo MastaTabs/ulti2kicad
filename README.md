@@ -25,7 +25,7 @@ Text sizes and placement could be better.
 This was only tested with version 4.80 files. Thats all I have.
 
 ```
-usage: ulti2kicad.py \[-h\] \[-f FONT\] \[-ts\] infile outfile
+usage: ulti2kicad.py [-h] [-f FONT] [-ts] infile outfile
 
 Convert PCB board files in UltiBoard 4.x format to KiCad pcb format.
 
