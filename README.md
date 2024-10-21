@@ -24,5 +24,16 @@ Text sizes and placement could be better.
 
 This was only tested with version 4.80 files. Thats all I have.
 
-usage: ulti2kicad.py \[-h\] \[-f FONT\] infile outfile
 
+usage: ulti2kicad.py \[-h\] \[-f FONT\] \[-ts\] infile outfile
+
+Convert PCB board files in UltiBoard 4.x format to KiCad pcb format.
+
+positional arguments:
+  infile                input file
+  outfile               output file
+
+options:
+  -h, --help            show this help message and exit
+  -f FONT, --font FONT  use a different font, mono spaced fonts work best
+  -ts, --textsilk       put freestanding silk text unto the front silk layer instead of the reference layer
