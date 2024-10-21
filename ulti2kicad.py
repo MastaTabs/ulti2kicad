@@ -186,7 +186,7 @@ parser.add_argument('-ts', '--textsilk', action='store_true', default=False)
 
 args = parser.parse_args()
 
-print(args)
+# print(args)
 xScale = (1/1.2) * 0.0254
 ncount = 0
 
@@ -246,6 +246,11 @@ def split_odd(arr):
     if sublist:  # Append the last sublist if not empty
         result.append(sublist)
     return result
+
+def netadjust(netnr):
+    if netnr == 65535: ret = 0  # no connect handling
+    else: ret = netnr + 1
+    return ret
 
 with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as kicad:
     for line in ddf:
@@ -527,8 +532,8 @@ with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as
                         pair = narr[i:i+2]
                         # print("pair ", pair)
                         # if pair[0] != '': break
-                        pair[0] =  int(pair[0]) + 1 # in kicad net 0 has to remain empty
-                        if pair[0] == 65536: pair[0] = 1
+                        pair[0] =  int(pair[0]) + 1             # in kicad net 0 has to remain empty
+                        if pair[0] == 65536: pair[0] = 0        # no connect
                         if not pair[1].isdigit(): pair[1] = 0   # thru hole
                         else: pair[1] = int(pair[1])
                         # pair.append(pair[1])
@@ -650,12 +655,13 @@ with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as
                                     # print(tarr)
                                     coord2 = v2mm(float(tarr[0]))
                                     coord3 = v2mm(float(tarr[1]))
-                                    netnr = int(tarr[2])
+                                    netnr = netadjust(int(tarr[2]))
                                     tcode = int(tarr[3])
                                     ttype = int(tarr[4])
                                     orient = int(tarr[5][0])
-                                    if(netnr == 65535):
-                                        netnr = 1
+                                    # if(netnr == 65535):
+                                    #     netnr = 0
+                                    # netnr += 1
                                     # print("Track ", layer, coord1, coord2, coord3, netnr, tcode, ttype, orient)
                                     # print(traceWidth)
                                     tstr = "  (segment (start {x1:.4f} {y1:.4f}) (end {x2:.4f} {y2:.4f}) (width {width:.3f}) (layer {layer}) (net {netnr}))\n"
@@ -683,9 +689,10 @@ with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as
                             vy1 = -(v2mm(int(vline[2])))
                             vx2 = v2mm(int(vline[3]))
                             vy2 = -(v2mm(int(vline[4])))
-                            vnetnr = int(vline[5])
-                            if(vnetnr == 65535):
-                                vnetnr = 1
+                            vnetnr = netadjust(int(vline[5]))
+                            # if(vnetnr == 65535):
+                            #     vnetnr = 0
+                            # vnetnr += 1
                             vtcode = int(vline[6])
                             vttype = int(vline[7])
                             vstr = "  (segment (start {x1:.4f} {y1:.4f}) (end {x2:.4f} {y2:.4f}) (width {width:.3f}) (layer {layer}) (net {netnr}))\n"
@@ -700,8 +707,9 @@ with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as
                             ar = v2mm(int(aline[3]))
                             arc1 = int(aline[4]) / 64
                             arc2 = int(aline[5]) / 64
-                            anetnr = int(aline[6])
-                            if(anetnr == 65535): anetnr = 0
+                            anetnr = netadjust(int(aline[6]))
+                            # if(anetnr == 65535): anetnr = 0
+                            # anetnr += 1
                             atcode = int(aline[7])
                             if(atcode == 65535): atcode = 0
                             attype = int(aline[8])
@@ -726,8 +734,9 @@ with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as
                             lpline = [int(i) for i in line[4:].split(' ')]
                             # print(lpline)
                             lplayer = lpline[0]
-                            lpnetnr = lpline[1]
-                            if(lpnetnr == 65535): lpnetnr = 0
+                            lpnetnr = netadjust(lpline[1])
+                            # if(lpnetnr == 65535): lpnetnr = 0
+                            # lpnetnr += 1
                             lppat   = lpline[2]
                             lpdist  = lpline[3]
                             lptcode = lpline[4]
@@ -782,7 +791,7 @@ with open(args.infile, 'r', encoding="cp850") as ddf, open(args.outfile, 'w') as
                             break
                         vline = line.split(" ")
                         vypos = -(v2mm(int(vline[0])))
-                        vnetnr = int(vline[1])
+                        vnetnr = netadjust(int(vline[1]))
                         vpcode = int(vline[2])
                         vstr = "  (via (at {x} {y}) (size {s}) (drill {d:.2f}) (layers \"{lt}\" \"{lb}\") (net {n}))\n"
                         kicad.write(vstr.format(x = vxpos, y = vypos, s = v2mm(padT[vpcode]['Y']), d = drillCode[vpcode], lt = "F.Cu", lb = "B.Cu", n = vnetnr))
