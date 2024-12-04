@@ -8,10 +8,8 @@ in the original UltiBoard manuals.
 Since I never really got attached to Eagle but do all my pcb design work in KiCad these days the target
 was set.
 
-Right now only 4 layer boards are generated. I plan to make this configurable using the command line.
-
 I have added kind of a bit of handling for Pad Stacks. KiCad's support is relatively new and not
-fully grown yet. So if you have a trough hole pad with a smaller top layer pad than the bottom one,
+fully grown yet. So if you have a through hole pad with a smaller top layer pad than the bottom one,
 the converter will add an additional SMD pad on the bottom layer to care for that.
 This should pass the DRC.
 
